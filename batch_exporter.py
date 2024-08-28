@@ -5,8 +5,10 @@
 import os, bpy
 from pathlib import Path
 from mathutils import Vector
+from types import SimpleNamespace
 from bpy.props import BoolProperty, StringProperty, EnumProperty, PointerProperty
 from bpy.types import Operator, Panel, PropertyGroup
+
 
 #
 # Settings
@@ -222,30 +224,42 @@ gltf_export_preferences = dict(
     export_morph=True,
 )
 
-# Export Format Type - These must match built-in glTF exporter values.
-GltfBatchExportFormatType = [
-    ("GLB", "glTF Binary (.glb)", \
-        "Exports a single file, with all data packed in binary form."),
-    ("GLTF_SEPARATE", "glTF Separate (.glTF + .bin + textures)", \
-        "Exports multiple files, with separate JSON, binary and texture data."),
-    ("GLTF_EMBEDDED", "glTF Embedded (.glTF)", \
-        "Exports a single file, with all data packed in JSON."),
-]
 
-# Exported Image Format Type - These must match built-in glTF exporter values.
-GltfBatchExportImageFormatType = [
-    ("AUTO", "Automatic", "Save PNGs as PNGs and JPEGs as JPEGs."),
-    ("JPEG", "JPEG (.jpg)", "Save images as JPEGs. (Images that need alpha are saved as PNGs though.)"),
-    ("NONE", "None", "Images will not be exported."),
-]
+gltf_pref_enum = SimpleNamespace( **{
+    # Export Format Type - These must match built-in glTF exporter values.
+    "FormatType" : [
+        ("GLB", "glTF Binary (.glb)",
+            "Exports a single file, with all data packed in binary form."),
+        ("GLTF_SEPARATE", "glTF Separate (.glTF + .bin + textures)",
+            "Exports multiple files, with separate JSON, binary and texture data."),
+        ("GLTF_EMBEDDED", "glTF Embedded (.glTF)",
+            "Exports a single file, with all data packed in JSON."),
+    ],
+
+    # Exported Image Format Type - These must match built-in glTF exporter values.
+    "ImageFormatType" : [
+        ("AUTO", "Automatic", "Save PNGs as PNGs and JPEGs as JPEGs."),
+        ("JPEG", "JPEG (.jpg)", "Save images as JPEGs. (Images that need alpha are saved as PNGs though.)"),
+        ("NONE", "None", "Images will not be exported."),
+    ],
+
+    "VertexColor" : [
+        ('MATERIAL', 'Material',
+         'Export vertex color when used by material'),
+        ('ACTIVE', 'Active',
+         'Export active vertex color'),
+        ('NONE', 'None',
+         'Do not export vertex color')
+    ]
+})
 
 # glTF export preferences.
 # Important: These property annotation names *must* match the built-in glTF export op 
 # parameter names!
 class GltfBatchExportPreferences(PropertyGroup):
-    export_format: EnumProperty(items=GltfBatchExportFormatType, name="glTF Format",
+    export_format: EnumProperty(items=gltf_pref_enum.FormatType, name="glTF Format",
         default="GLB", description="The format files with be exported to")
-    export_image_format: EnumProperty(items=GltfBatchExportImageFormatType, name="Image Format",
+    export_image_format: EnumProperty(items=gltf_pref_enum.ImageFormatType, name="Image Format",
         default="NONE", description="The format image files with be exported to")
     export_yup: BoolProperty(name="+Y Up", default=True,
         description="Export using glTF convention, +Y up")
@@ -255,7 +269,8 @@ class GltfBatchExportPreferences(PropertyGroup):
         description="Export normals per vertex")
     export_tangents: BoolProperty(name="Tangents", default=False,
         description="Export tangents per vertex")
-    export_colors: BoolProperty(name="Vertex Colors", default=False,
+    export_vertex_color: EnumProperty(items=gltf_pref_enum.VertexColor,
+        name="Vertex Colors", default="MATERIAL",
         description="Export colors per vertex")
     export_apply: BoolProperty(name="Apply Modifiers", default=True,
         description="Applies modifiers before exporting. (Prevents shape key export if True)")
